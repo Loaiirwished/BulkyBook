@@ -83,28 +83,31 @@ namespace BulkyBook.Web.Areas.Admin.Controllers
 
         
         
-        public IActionResult Delete(int? id)
-        {
-            if (id == null || id == 0)
-            {
-                return NotFound();
-            }
-            var category = _unitOfWork.Category.GetFirstOrDefault(x => x.Id == id);
-            if (category == null)
-            {
-                return NotFound();
-            }
-            _unitOfWork.Category.Remove(category);
-            _unitOfWork.Save();
-            TempData["success"] = "Category Deleted Successfuly";
-            return RedirectToAction("Index");
-        }
+        
         #region API CALLS
         [HttpGet]
         public IActionResult GetALl()
         {
             var productList = _unitOfWork.Product.GetAll(includeProperties : "Category,CoverType");
             return Json(new {data = productList});
+        }
+
+        [HttpDelete]
+        public IActionResult Delete(int? id)
+        {
+            var obj = _unitOfWork.Product.GetFirstOrDefault(x => x.Id == id);
+            if (obj == null)
+            {
+                return Json(new { success = false , message ="Error While Deleting"});
+            }
+            var oldImagePath = Path.Combine(_hostEnvironment.WebRootPath, obj.ImageUrl.TrimStart('\\'));
+            if (System.IO.File.Exists(oldImagePath))
+            {
+                System.IO.File.Delete(oldImagePath);
+            }
+            _unitOfWork.Product.Remove(obj);
+            _unitOfWork.Save();
+            return Json(new { success = true, message = "Delete Successful" });
         }
         #endregion
     }

@@ -17,7 +17,7 @@
                 </div>
                 <div class="mb-3">
                     <label asp-for="Description"></label>
-                    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                    <textarea id="description" asp-for="Description" class="form-control" rows="3"></textarea>
                     <span asp-validation-for="Description" class="text-danger"></span>
                 </div>
                 <div class="mb-3 col-6">
@@ -97,7 +97,13 @@
     @{
         <partial name="_ValidationScriptsPartial" />
     }
+    
     <script>
+
+        $(document).ready(function () {
+            $('#description').summernote();
+        });
+
         function ValidateInput(){
             if(document.getElementById("ImageFile").value==""){
                 Swal.fire({
