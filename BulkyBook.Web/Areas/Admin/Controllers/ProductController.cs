@@ -3,6 +3,7 @@ using BulkyBook.DataAccess.Repository.IRepository;
 using BulkyBook.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Nest;
 
 namespace BulkyBook.Web.Areas.Admin.Controllers
 {
@@ -23,12 +24,20 @@ namespace BulkyBook.Web.Areas.Admin.Controllers
             return View();
         }
         [HttpGet]
-        public IActionResult UpSert()
+        public IActionResult UpSert(int? id)
         {
             Product product = new();
             ViewData["categories"] = new SelectList(_unitOfWork.Category.GetAll(), "Id", "Name");
             ViewData["coverTypes"] = new SelectList(_unitOfWork.CoverType.GetAll(), "Id", "Name");
-            return View(product);
+            if (id == null || id == 0)
+            {
+                return View(product);
+            }
+            else
+            {
+                return View(_unitOfWork.Product.GetFirstOrDefault(x=>x.Id ==id));
+            }
+            
         }
         [HttpPost]
         public IActionResult UpSert(Product obj,IFormFile? file)
@@ -42,50 +51,38 @@ namespace BulkyBook.Web.Areas.Admin.Controllers
                     var fileName = Guid.NewGuid().ToString();
                     var upload = Path.Combine(wwwRootPath, @"Images\Products");
                     var extension = Path.GetExtension(file.FileName);
+                    if(obj.ImageUrl != null)
+                    {
+                        var oldImagePath = Path.Combine(wwwRootPath, obj.ImageUrl.TrimStart('\\'));
+                        if(System.IO.File.Exists(oldImagePath))
+                        {
+                            System.IO.File.Delete(oldImagePath);
+                        }
+                    }
                     using (var fileStream = new FileStream(Path.Combine(upload, fileName + extension), FileMode.Create))
                     {
                         file.CopyTo(fileStream);
                     }
                     obj.ImageUrl = @"\Images\Products\" + fileName + extension;
                 }
-                _unitOfWork.Product.Add(obj);
+                if(obj.Id == 0)
+                {
+                    _unitOfWork.Product.Add(obj);
+                    TempData["success"] = "Product Created Successfuly";
+                }
+                else
+                {
+                    _unitOfWork.Product.Update(obj);
+                    TempData["success"] = "Product Updated Successfuly";
+                }
                 _unitOfWork.Save();
-                TempData["success"] = "Product Created Successfuly";
                 return RedirectToAction("Index");
             }
             return View(obj);
         }
 
-        [HttpGet]
-        public IActionResult Edit(int? id)
-        {
-            if (id == null || id == 0)
-            {
-                return NotFound();
-            }
-            var category = _unitOfWork.Category.GetFirstOrDefault(x => x.Id == id);
-            if (category == null)
-            {
-                return NotFound();
-            }
-            return View(category);
-        }
-        [HttpPost]
-        public IActionResult Edit(Category input)
-        {
-            if (input.Name == input.DisplayOrder.ToString())
-            {
-                ModelState.AddModelError("", "The DisplayOrder cannt exactly match the Name");
-            }
-            if (ModelState.IsValid)
-            {
-                _unitOfWork.Category.Update(input);
-                _unitOfWork.Save();
-                TempData["success"] = "Category Updated Successfuly";
-                return RedirectToAction("Index");
-            }
-            return View(input);
-        }
+        
+        
         public IActionResult Delete(int? id)
         {
             if (id == null || id == 0)
