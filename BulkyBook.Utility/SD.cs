@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BulkyBook.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,5 +9,21 @@ namespace BulkyBook.Utility
 {
     public static class SD
     {
-    }
+        public const string Role_User_Indiv = "Individual";
+        public const string Role_User_Comp = "Company";
+        public const string Role_Admin = "Admin";
+        public const string Role_Emoloyee = "Emoloyee";
+
+		public const string StatusPending = "Pending";
+		public const string StatusApproved = "Approved";
+		public const string StatusInProcess = "InProcess";
+		public const string StatusShipping = "Shipping";
+		public const string StatusCancelled = "Cancelled";
+		public const string StatusRefunded = "Refunded";
+
+		public const string PaymentStatusPending = "Pending";
+		public const string PaymentStatusApproved = "Approved";
+		public const string PaymentStatusDelayedPayment = "ApprovedForDelayedPayment";
+		public const string PaymentStatusRejected = "Rejected";
+	}
 }

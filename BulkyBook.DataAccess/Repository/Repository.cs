@@ -1,6 +1,7 @@
 ﻿
 using BulkyBook.DataAccess.Repository.IRepository;
 using Microsoft.EntityFrameworkCore;
+using Nest;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,9 +9,10 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
+
 namespace BulkyBook.DataAccess.Repository
 {
-    public class Repository<T> : IRepository<T> where T : class
+    public class Repository<T> : DataAccess.Repository.IRepository.IRepository<T> where T : class
     {
         private readonly ApplicationDbContext _db;
         internal DbSet<T> dbSet;
@@ -26,30 +28,37 @@ namespace BulkyBook.DataAccess.Repository
             dbSet.Add(entity);
         }
 
-        public IEnumerable<T> GetAll(string? includeProperties = null)
+        public IEnumerable<T> GetAll(Expression<Func<T, bool>>? filter = null,string? includeProperties = null)
         {
             IQueryable<T> query = dbSet;
-            if(includeProperties != null)
+            if(filter != null)
+            {
+				query = query.Where(filter);
+			}
+			
+			if (includeProperties != null)
             {
                 foreach (var prop in includeProperties.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
                 {
                     query = query.Include(prop);
                 }
             }
-            return query.ToList();
+            return query.ToList();              
         }
 
         public T GetFirstOrDefault(Expression<Func<T, bool>> filter, string? includeProperties = null)
         {
             IQueryable<T> query = dbSet;
-            if (includeProperties != null)
+			query = query.Where(filter);
+
+			if (includeProperties != null)
             {
                 foreach (var prop in includeProperties.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
                 {
                     query = query.Include(prop);
                 }
             }
-            return query.SingleOrDefault(filter);
+            return query.SingleOrDefault();
         }
 
         public void Remove(T entity)

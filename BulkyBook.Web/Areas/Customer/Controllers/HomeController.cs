@@ -1,8 +1,10 @@
 ﻿using BulkyBook.DataAccess.Repository.IRepository;
 using BulkyBook.Models;
-using BulkyBook.Models.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis;
 using System.Diagnostics;
+using System.Security.Claims;
 
 namespace BulkyBook.Web.Areas.Customer.Controllers
 {
@@ -23,17 +25,44 @@ namespace BulkyBook.Web.Areas.Customer.Controllers
             IEnumerable<Product> products = _unitOfWork.Product.GetAll(includeProperties: "Category,CoverType");
             return View(products);
         }
-        public IActionResult Details(int id)
+        [HttpGet]
+        public IActionResult Details(int productId)
         {
             ShoppingCart chartObj = new()
             {
                 Count = 1,
-                Product = _unitOfWork.Product.GetFirstOrDefault(x => x.Id == id, includeProperties: "Category,CoverType")
+                ProductId = productId,
+                Product = _unitOfWork.Product.GetFirstOrDefault(x => x.Id == productId, includeProperties: "Category,CoverType")
             };
             
             return View(chartObj);
         }
 
-        
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize]
+        public IActionResult Details(ShoppingCart obj)
+        {
+            var claimsIdentity = (ClaimsIdentity)User.Identity;
+            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+            obj.UserId = claim.Value;
+
+            ShoppingCart cartFromDb = _unitOfWork.ShoppingCart.GetFirstOrDefault(x=>x.UserId == claim.Value && x.ProductId == obj.ProductId);
+            if(cartFromDb == null)
+            {
+                _unitOfWork.ShoppingCart.Add(obj);
+            }
+            else
+            {
+                _unitOfWork.ShoppingCart.IncrementCount(cartFromDb, obj.Count);
+                _unitOfWork.ShoppingCart.Update(cartFromDb);
+            }
+
+            _unitOfWork.Save();
+            return RedirectToAction(nameof(Index));
+        }
+
+
     }
 }
