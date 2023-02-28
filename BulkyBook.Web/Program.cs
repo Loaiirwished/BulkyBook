@@ -3,6 +3,8 @@ using BulkyBook.DataAccess.Repository;
 using BulkyBook.DataAccess.Repository.IRepository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
+using BulkyBook.Utility;
+using Stripe;
 
 namespace BulkyBook.Web
 {
@@ -17,7 +19,7 @@ namespace BulkyBook.Web
             builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(
                 builder.Configuration.GetConnectionString("DefaultConnection")
                 ));
-
+            builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
             builder.Services.AddIdentity<IdentityUser, IdentityRole>(options => {
                 options.SignIn.RequireConfirmedAccount = false;
                 options.Password.RequiredLength = 1;
@@ -27,6 +29,7 @@ namespace BulkyBook.Web
             }).AddDefaultTokenProviders().AddDefaultUI()
                 .AddEntityFrameworkStores<ApplicationDbContext>();
                 
+
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddRazorPages();
             var app = builder.Build();
@@ -41,8 +44,9 @@ namespace BulkyBook.Web
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
+            StripeConfiguration.ApiKey = builder.Configuration.GetSection("Stripe:SecretKey").Get<string>();
 
-            app.UseRouting();
+			app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
             app.MapRazorPages();
