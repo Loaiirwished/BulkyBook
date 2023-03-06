@@ -37,6 +37,7 @@ namespace BulkyBook.DataAccess.Repository
 		public void UpdateStripePaymentID(int Id, string sessionId, string PaymentIntentId)
 		{
 			var orderFromDb = _db.OrderHeaders.FirstOrDefault(x=>x.Id== Id);
+            orderFromDb.PaymentDate = DateTime.Now; 
             orderFromDb.SessionId = sessionId;
             orderFromDb.PaymentIntentId = PaymentIntentId;
 		}

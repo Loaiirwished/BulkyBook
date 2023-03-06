@@ -182,11 +182,13 @@ namespace BulkyBook.Web.Areas.Customer.Controllers
 			OrderHeader orderHeader = _unitOfWork.OrderHeader.GetFirstOrDefault(x=>x.Id == Id);
 			if(orderHeader.PaymentStatus != SD.PaymentStatusDelayedPayment)
 			{
+
 				var service = new SessionService();
 				Session session = service.Get(orderHeader.SessionId);
 				//check the stripe status
 				if (session.PaymentStatus.ToLower() == "paid")
 				{
+					_unitOfWork.OrderHeader.UpdateStripePaymentID(Id, orderHeader.SessionId, session.PaymentIntentId);
 					_unitOfWork.OrderHeader.UpdateStatus(Id, SD.StatusApproved, SD.PaymentStatusApproved);
 					_unitOfWork.Save();
 				}
