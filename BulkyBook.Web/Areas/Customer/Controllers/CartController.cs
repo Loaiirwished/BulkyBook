@@ -189,6 +189,7 @@ namespace BulkyBook.Web.Areas.Customer.Controllers
 				if (session.PaymentStatus.ToLower() == "paid")
 				{
 					_unitOfWork.OrderHeader.UpdateStripePaymentID(Id, orderHeader.SessionId, session.PaymentIntentId);
+					HttpContext.Session.Clear();
 					_unitOfWork.OrderHeader.UpdateStatus(Id, SD.StatusApproved, SD.PaymentStatusApproved);
 					_unitOfWork.Save();
 				}
@@ -231,7 +232,9 @@ namespace BulkyBook.Web.Areas.Customer.Controllers
             if(cart.Count <= 1)
             {
 				_unitOfWork.ShoppingCart.Remove(cart);
-			}
+                var count = _unitOfWork.ShoppingCart.GetAll(x => x.UserId == cart.UserId).ToList().Count-1;
+                HttpContext.Session.SetInt32(SD.SessionCart, count);
+            }
             else
             {
 				_unitOfWork.ShoppingCart.DecermentCount(cart, 1);
@@ -246,6 +249,8 @@ namespace BulkyBook.Web.Areas.Customer.Controllers
 			var cart = _unitOfWork.ShoppingCart.GetFirstOrDefault(x => x.Id == cartId);
 			_unitOfWork.ShoppingCart.Remove(cart);
 			_unitOfWork.Save();
+			var count = _unitOfWork.ShoppingCart.GetAll(x => x.UserId == cart.UserId).ToList().Count;
+			HttpContext.Session.SetInt32(SD.SessionCart,count);
 			return RedirectToAction(nameof(Index));
 		}
 

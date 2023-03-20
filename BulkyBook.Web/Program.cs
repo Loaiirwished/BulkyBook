@@ -32,6 +32,22 @@ namespace BulkyBook.Web
 
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddRazorPages();
+
+            builder.Services.AddDistributedMemoryCache();
+            builder.Services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromMinutes(100);
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+            });
+
+            builder.Services.AddAuthentication().AddFacebook(options =>
+            {
+                options.AppId = "222138366954222";
+                options.AppSecret = "90d15550ff3b6dc5ff8a0ad07830c7c0";
+            });
+
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -50,7 +66,7 @@ namespace BulkyBook.Web
             app.UseAuthentication();
             app.UseAuthorization();
             app.MapRazorPages();
-
+            app.UseSession();
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{area=Customer}/{controller=Home}/{action=Index}/{id?}");
